@@ -6,9 +6,14 @@
 #include-once
 #include <WinAPI.au3>
 #include <Array.au3>
+#include <Misc.au3>
 
 Opt("TrayMenuMode", 1 + 2)
 Opt("TrayOnEventMode", 1)
+
+If _Singleton("WINWARMER", 1) = 0 Then 
+	Exit
+EndIf	
 
 HotKeySet("!{PGDN}", "LowerGamma")
 HotKeySet("!{PGUP}", "IncreaseGamma")
@@ -39,6 +44,7 @@ EndIf
 Dim Const $nDawn = 7, $nDay = 10, $nAfternoon = 15, $nEvening = 18, $nDark = 22
 Dim Const $nDarkBase = 70, $nEveningBase = 90, $nAfternoonBase = 100, $nDayBase = 128, $nDawnBase = 95
 
+Global $g_nUpdateFrequency = 1800000
 Global $aRGB[3], $g_bEnabled = True
 Global $g_Red_Old, $g_Green_Old, $g_Blue_Old
 
@@ -60,17 +66,16 @@ While 1
 	
 	EqualizeGammaAray($aRGB) ;Give the color a light orange tint
 	_SetDeviceGammaRamp($aRGB[0], $aRGB[1], $aRGB[2], $GDI_DLL)
-	Sleep(180000) ; Update every 3 minutes
+	Sleep($g_nUpdateFrequency) ; Update every 3 minutes
 WEnd
 
 
 
 Func FillArray(ByRef $aDest, $nValue)
 	;Fill $aDest with $nValue
-	If UBound($aDest) < 3 Then Return
-	$aDest[0] = $nValue
-	$aDest[1] = $nValue
-	$aDest[2] = $nValue
+	For $i = 0 To UBound($aDest) - 1
+		$aDest[$i] = $nValue
+	Next
 EndFunc   ;==>FillArray
 
 
@@ -79,7 +84,7 @@ Func EqualizeGammaAray(ByRef $aRGB)
 	If UBound($aRGB) < 3 Then Return
 	$aRGB[0] = Round($aRGB[0] * 1.4)
 	$aRGB[1] = Round($aRGB[1] * 1)
-	$aRGB[2] = Round($aRGB[2] * 0.1)
+	$aRGB[2] = Round($aRGB[2] * 0.2)
 	If $aRGB[2] < 10 Then $aRGB[2] = 0 ;Eliminate blue light
 EndFunc   ;==>EqualizeGammaAray
 
@@ -114,6 +119,7 @@ Func Toggle()
 	If $g_bEnabled = True Then ;Disable WinWarm
 		Global $g_Red_Old = $aRGB[0], $g_Green_Old = $aRGB[1], $g_Blue_Old = $aRGB[2]
 		FillArray($aRGB, 128) ;Default brightness values
+		$g_nUpdateFrequency = 60000 * 60
 		TrayItemSetText($hTrayToggle, "Enable")
 	Else ;Enable WinWarm
 		$aRGB[0] = $g_Red_Old

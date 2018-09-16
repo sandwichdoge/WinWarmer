@@ -77,8 +77,8 @@ EndFunc   ;==>FillArray
 Func EqualizeGammaAray(ByRef $aRGB)
 	;Give the color in $aRGB a light orange tint
 	If UBound($aRGB) < 3 Then Return
-	$aRGB[0] = Round($aRGB[0] * 1.2)
-	$aRGB[1] = Round($aRGB[1] * 1.1)
+	$aRGB[0] = Round($aRGB[0] * 1.4)
+	$aRGB[1] = Round($aRGB[1] * 1)
 	$aRGB[2] = Round($aRGB[2] * 0.1)
 	If $aRGB[2] < 10 Then $aRGB[2] = 0 ;Eliminate blue light
 EndFunc   ;==>EqualizeGammaAray
@@ -127,11 +127,12 @@ EndFunc   ;==>Toggle
 
 
 Func About()
-	MsgBox(64, "WinWarm", "Make your screen colors warmer based on time of day." & @CRLF & @CRLF & "sandwichdoge@gmail.com" & @CRLF & "http://github.com/sandwichdoge")
+	MsgBox(64, "WinWarmer", "Make your screen colors warmer based on time of day." & @CRLF & @CRLF & "sandwichdoge@gmail.com" & @CRLF & "http://github.com/sandwichdoge")
 EndFunc   ;==>About
 
 
 Func ExitS()
+	_SetDeviceGammaRamp()
 	DllClose($GDI_DLL)
 	Exit
 EndFunc   ;==>ExitS

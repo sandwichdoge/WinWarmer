@@ -5,7 +5,6 @@
 
 #include-once
 #include <WinAPI.au3>
-#include <Array.au3>
 #include <Misc.au3>
 
 Opt("TrayMenuMode", 1 + 2)
@@ -42,30 +41,37 @@ If $GDI_DLL < 0 Then
 EndIf
 
 Dim Const $nDawn = 7, $nDay = 10, $nAfternoon = 15, $nEvening = 18, $nDark = 22
-Dim Const $nDarkBase = 70, $nEveningBase = 90, $nAfternoonBase = 100, $nDayBase = 128, $nDawnBase = 95
+Dim Const $nDarkBrightness = 70, $nEveningBrightness = 90, $nAfternoonBrightness = 110, $nDayBrightness = 128, $nDawnBrightness = 95
+Dim Const $aDarkTint[] = [1.4, 0.2], $aDawnTint[] = [1.2, 0.6], $aDayTint[] = [1, 1], $aAfternoonTint[] = [1, 0.9], $aEveningTint[] = [1.2, 0.4]
 
-Global $g_nUpdateFrequency = 1800000
-Global $aRGB[3], $g_bEnabled = True
+Global $g_nUpdateFrequency = 180000
+Global $g_aRGB[3], $g_bEnabled = True
 Global $g_Red_Old, $g_Green_Old, $g_Blue_Old
+Global $g_aTint[2] = [1, 1]
 
 
 While 1
 	$nHour = @HOUR
 	If $nHour > $nDark Or $nHour < $nDawn Then ;DARK
-		FillArray($aRGB, $nDarkBase)
+		FillArray($g_aRGB, $nDarkBrightness)
+		DupArray($g_aTint, $aDarkTint)
 	ElseIf $nHour < $nDay Then ;DAWN
-		FillArray($aRGB, $nDawnBase)
+		FillArray($g_aRGB, $nDawnBrightness)
+		DupArray($g_aTint, $aDawnTint)
 	ElseIf $nHour < $nAfternoon Then ;DAY
-		FillArray($aRGB, $nDayBase)
+		FillArray($g_aRGB, $nDayBrightness)
+		DupArray($g_aTint, $aDayTint)
 	ElseIf $nHour < $nEvening Then ;AFTERNOON
-		FillArray($aRGB, $nAfternoonBase)
+		FillArray($g_aRGB, $nAfternoonBrightness)
+		DupArray($g_aTint, $aAfternoonTint)
 	ElseIf $nHour < $nDark Then ;EVENING
-		FillArray($aRGB, $nEveningBase)
+		FillArray($g_aRGB, $nEveningBrightness)
+		DupArray($g_aTint, $aEveningTint)
 	EndIf
-	If $aRGB[2] < 0 Then $aRGB[2] = 0
+	If $g_aRGB[2] < 0 Then $g_aRGB[2] = 0
 	
-	EqualizeGammaAray($aRGB) ;Give the color a light orange tint
-	_SetDeviceGammaRamp($aRGB[0], $aRGB[1], $aRGB[2], $GDI_DLL)
+	EqualizeGammaAray($g_aRGB, $g_aTint[0], 1, $g_aTint[1]) ;Give the color a light orange tint
+	_SetDeviceGammaRamp($g_aRGB[0], $g_aRGB[1], $g_aRGB[2], $GDI_DLL)
 	Sleep($g_nUpdateFrequency) ; Update every 3 minutes
 WEnd
 
@@ -79,56 +85,65 @@ Func FillArray(ByRef $aDest, $nValue)
 EndFunc   ;==>FillArray
 
 
-Func EqualizeGammaAray(ByRef $aRGB)
-	;Give the color in $aRGB a light orange tint
-	If UBound($aRGB) < 3 Then Return
-	$aRGB[0] = Round($aRGB[0] * 1.4)
-	$aRGB[1] = Round($aRGB[1] * 1)
-	$aRGB[2] = Round($aRGB[2] * 0.2)
-	If $aRGB[2] < 10 Then $aRGB[2] = 0 ;Eliminate blue light
+Func DupArray(ByRef $aDest, $aSrc)
+	If UBound($aDest) < UBound($aSrc) Then Return SetError(-1)
+	For $i = 0 To UBound($aDest) - 1
+		$aDest[$i] = $aSrc[$i]
+	Next
+EndFunc	
+
+
+Func EqualizeGammaAray(ByRef $g_aRGB, $fRedTint = 1.4, $fGreenTint = 1, $fBlueTint = 0.2) ; red tint range: 0 - 1.6
+	;Give the color in $g_aRGB a light orange tint
+	If UBound($g_aRGB) < 3 Then Return
+	$g_aRGB[0] = Round($g_aRGB[0] * $fRedTint)
+	$g_aRGB[1] = Round($g_aRGB[1] * 1)
+	$g_aRGB[2] = Round($g_aRGB[2] * $fBlueTint)
+	If $g_aRGB[2] < 10 Then $g_aRGB[2] = 0 ;Eliminate blue light
 EndFunc   ;==>EqualizeGammaAray
 
 
 Func LowerGamma()
-	;Global variable $aRGB is modified
-	For $i = 0 To UBound($aRGB) - 1
-		$aRGB[$i] -= 25
-		If $aRGB[$i] < 0 Then $aRGB[$i] = 0
-		If $aRGB[$i] > 255 Then $aRGB[$i] = 255
+	;Global variable $g_aRGB is modified
+	For $i = 0 To UBound($g_aRGB) - 1
+		$g_aRGB[$i] -= 25
+		If $g_aRGB[$i] < 0 Then $g_aRGB[$i] = 0
+		If $g_aRGB[$i] > 255 Then $g_aRGB[$i] = 255
 	Next
 	
-	EqualizeGammaAray($aRGB) ;Give the color a light orange tint
-	_SetDeviceGammaRamp($aRGB[0], $aRGB[1], $aRGB[2])
+	EqualizeGammaAray($g_aRGB, $g_aTint[0], 1, $g_aTint[1]) ;Give the color a light orange tint
+	_SetDeviceGammaRamp($g_aRGB[0], $g_aRGB[1], $g_aRGB[2])
 EndFunc   ;==>LowerGamma
 
 
 Func IncreaseGamma()
-	;Global variable $aRGB is modified
-	For $i = 0 To UBound($aRGB) - 1
-		$aRGB[$i] += 25
-		If $aRGB[$i] < 0 Then $aRGB[$i] = 0
-		If $aRGB[$i] > 255 Then $aRGB[$i] = 255
+	;Global variable $g_aRGB is modified
+	For $i = 0 To UBound($g_aRGB) - 1
+		$g_aRGB[$i] += 25
+		If $g_aRGB[$i] < 0 Then $g_aRGB[$i] = 0
+		If $g_aRGB[$i] > 255 Then $g_aRGB[$i] = 255
 	Next
 	
-	EqualizeGammaAray($aRGB) ;Give the color a light orange tint
-	_SetDeviceGammaRamp($aRGB[0], $aRGB[1], $aRGB[2])
+	EqualizeGammaAray($g_aRGB, $g_aTint[0], 1, $g_aTint[1]) ;Give the color a light orange tint
+	_SetDeviceGammaRamp($g_aRGB[0], $g_aRGB[1], $g_aRGB[2])
 EndFunc   ;==>IncreaseGamma
 
 
 Func Toggle()
 	If $g_bEnabled = True Then ;Disable WinWarm
-		Global $g_Red_Old = $aRGB[0], $g_Green_Old = $aRGB[1], $g_Blue_Old = $aRGB[2]
-		FillArray($aRGB, 128) ;Default brightness values
+		Global $g_Red_Old = $g_aRGB[0], $g_Green_Old = $g_aRGB[1], $g_Blue_Old = $g_aRGB[2]
+		FillArray($g_aRGB, 128) ;Default brightness values
 		$g_nUpdateFrequency = 60000 * 60
-		TrayItemSetText($hTrayToggle, "Enable")
+		TrayItemSetText($hTrayToggle, "Enable (Alt-End)")
 	Else ;Enable WinWarm
-		$aRGB[0] = $g_Red_Old
-		$aRGB[1] = $g_Green_Old
-		$aRGB[2] = $g_Blue_Old
-		TrayItemSetText($hTrayToggle, "Disable")
+		$g_aRGB[0] = $g_Red_Old
+		$g_aRGB[1] = $g_Green_Old
+		$g_aRGB[2] = $g_Blue_Old
+		$g_nUpdateFrequency = 180000
+		TrayItemSetText($hTrayToggle, "Disable (Alt-End)")
 	EndIf
 	$g_bEnabled = Not $g_bEnabled
-	_SetDeviceGammaRamp($aRGB[0], $aRGB[1], $aRGB[2])
+	_SetDeviceGammaRamp($g_aRGB[0], $g_aRGB[1], $g_aRGB[2])
 EndFunc   ;==>Toggle
 
 

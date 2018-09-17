@@ -113,6 +113,7 @@ Func LowerGamma()
 	
 	EqualizeGammaAray($g_aRGB, $g_aTint[0], 1, $g_aTint[1]) ;Give the color a light orange tint
 	_SetDeviceGammaRamp($g_aRGB[0], $g_aRGB[1], $g_aRGB[2])
+	$g_nUpdateFrequency = 60000 * 60 ;Dim for 1 hour
 EndFunc   ;==>LowerGamma
 
 
@@ -126,6 +127,7 @@ Func IncreaseGamma()
 	
 	EqualizeGammaAray($g_aRGB, $g_aTint[0], 1, $g_aTint[1]) ;Give the color a light orange tint
 	_SetDeviceGammaRamp($g_aRGB[0], $g_aRGB[1], $g_aRGB[2])
+	$g_nUpdateFrequency = 60000 * 60 ;Brighten for 1 hour
 EndFunc   ;==>IncreaseGamma
 
 

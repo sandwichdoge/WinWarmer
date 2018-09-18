@@ -41,8 +41,8 @@ If $GDI_DLL < 0 Then
 EndIf
 
 Dim Const $nDawn = 7, $nDay = 10, $nAfternoon = 15, $nEvening = 18, $nDark = 22
-Dim Const $nDarkBrightness = 70, $nEveningBrightness = 90, $nAfternoonBrightness = 110, $nDayBrightness = 128, $nDawnBrightness = 95
-Dim Const $aDarkTint[] = [1.4, 0.2], $aDawnTint[] = [1.2, 0.6], $aDayTint[] = [1, 1], $aAfternoonTint[] = [1, 0.9], $aEveningTint[] = [1.2, 0.4]
+Dim Const $nDarkBrightness = 75, $nEveningBrightness = 90, $nAfternoonBrightness = 110, $nDayBrightness = 128, $nDawnBrightness = 95
+Dim Const $aDarkTint[] = [1.2, 0.2], $aDawnTint[] = [1.1, 0.6], $aDayTint[] = [1, 1], $aAfternoonTint[] = [1, 0.9], $aEveningTint[] = [1.2, 0.4]
 
 Global $g_nUpdateFrequency = 180000
 Global $g_aRGB[3], $g_bEnabled = True
@@ -52,19 +52,19 @@ Global $g_aTint[2] = [1, 1]
 
 While 1
 	$nHour = @HOUR
-	If $nHour > $nDark Or $nHour < $nDawn Then ;DARK
+	If $nHour >= $nDark Or $nHour <= $nDawn Then ;DARK
 		FillArray($g_aRGB, $nDarkBrightness)
 		DupArray($g_aTint, $aDarkTint)
-	ElseIf $nHour < $nDay Then ;DAWN
+	ElseIf $nHour <= $nDay Then ;DAWN
 		FillArray($g_aRGB, $nDawnBrightness)
 		DupArray($g_aTint, $aDawnTint)
-	ElseIf $nHour < $nAfternoon Then ;DAY
+	ElseIf $nHour <= $nAfternoon Then ;DAY
 		FillArray($g_aRGB, $nDayBrightness)
 		DupArray($g_aTint, $aDayTint)
-	ElseIf $nHour < $nEvening Then ;AFTERNOON
+	ElseIf $nHour <= $nEvening Then ;AFTERNOON
 		FillArray($g_aRGB, $nAfternoonBrightness)
 		DupArray($g_aTint, $aAfternoonTint)
-	ElseIf $nHour < $nDark Then ;EVENING
+	ElseIf $nHour <= $nDark Then ;EVENING
 		FillArray($g_aRGB, $nEveningBrightness)
 		DupArray($g_aTint, $aEveningTint)
 	EndIf
@@ -99,7 +99,6 @@ Func EqualizeGammaAray(ByRef $g_aRGB, $fRedTint = 1.4, $fGreenTint = 1, $fBlueTi
 	$g_aRGB[0] = Round($g_aRGB[0] * $fRedTint)
 	$g_aRGB[1] = Round($g_aRGB[1] * 1)
 	$g_aRGB[2] = Round($g_aRGB[2] * $fBlueTint)
-	If $g_aRGB[2] < 10 Then $g_aRGB[2] = 0 ;Eliminate blue light
 EndFunc   ;==>EqualizeGammaAray
 
 
@@ -113,7 +112,7 @@ Func LowerGamma()
 	
 	EqualizeGammaAray($g_aRGB, $g_aTint[0], 1, $g_aTint[1]) ;Give the color a light orange tint
 	_SetDeviceGammaRamp($g_aRGB[0], $g_aRGB[1], $g_aRGB[2])
-	$g_nUpdateFrequency = 60000 * 60 ;Dim for 1 hour
+	Sleep(60000 * 60) ;Dim for 1 hour
 EndFunc   ;==>LowerGamma
 
 
@@ -127,7 +126,7 @@ Func IncreaseGamma()
 	
 	EqualizeGammaAray($g_aRGB, $g_aTint[0], 1, $g_aTint[1]) ;Give the color a light orange tint
 	_SetDeviceGammaRamp($g_aRGB[0], $g_aRGB[1], $g_aRGB[2])
-	$g_nUpdateFrequency = 60000 * 60 ;Brighten for 1 hour
+	Sleep(60000 * 60) ;Brighten for 1 hour
 EndFunc   ;==>IncreaseGamma
 
 
@@ -135,13 +134,12 @@ Func Toggle()
 	If $g_bEnabled = True Then ;Disable WinWarm
 		Global $g_Red_Old = $g_aRGB[0], $g_Green_Old = $g_aRGB[1], $g_Blue_Old = $g_aRGB[2]
 		FillArray($g_aRGB, 128) ;Default brightness values
-		$g_nUpdateFrequency = 60000 * 60
 		TrayItemSetText($hTrayToggle, "Enable (Alt-End)")
+		Sleep(60000 * 60) ;Disable for 1 hour
 	Else ;Enable WinWarm
 		$g_aRGB[0] = $g_Red_Old
 		$g_aRGB[1] = $g_Green_Old
 		$g_aRGB[2] = $g_Blue_Old
-		$g_nUpdateFrequency = 180000
 		TrayItemSetText($hTrayToggle, "Disable (Alt-End)")
 	EndIf
 	$g_bEnabled = Not $g_bEnabled

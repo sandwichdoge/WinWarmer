@@ -43,12 +43,12 @@ EndIf
 Dim Const $nDawn = 7, $nDay = 10, $nAfternoon = 15, $nEvening = 18, $nDark = 22
 Dim Const $nDarkBrightness = 75, $nEveningBrightness = 90, $nAfternoonBrightness = 110, $nDayBrightness = 128, $nDawnBrightness = 95
 Dim Const $aDarkTint[] = [1.2, 0.2], $aDawnTint[] = [1.1, 0.6], $aDayTint[] = [1, 1], $aAfternoonTint[] = [1, 0.9], $aEveningTint[] = [1.2, 0.4]
-Dim Const $UPDATE_FREQUENCY = 180000
+Dim Const $UPDATE_FREQUENCY = 1800
 
-Global $g_bIsPaused = False, $g_bEnabled = True
-Global $g_Red_Old, $g_Green_Old, $g_Blue_Old
+Global $g_bIsPaused = False
 Global $g_aTint[2] = [1, 1]
 Global $g_aRGB[3]
+Global $g_aRGB_Old[3]
 
 
 While 1
@@ -80,7 +80,7 @@ WEnd
 
 
 
-Func FillArray(ByRef $aDest, $nValue)
+Func FillArray(ByRef $aDest, $nValue) ;Similar to memset() in C
 	;Fill $aDest with $nValue
 	For $i = 0 To UBound($aDest) - 1
 		$aDest[$i] = $nValue
@@ -88,7 +88,7 @@ Func FillArray(ByRef $aDest, $nValue)
 EndFunc   ;==>FillArray
 
 
-Func CopyArray(ByRef $aDest, $aSrc)
+Func CopyArray(ByRef $aDest, $aSrc)  ;Similar to memcpy() in C
 	If UBound($aDest) < UBound($aSrc) Then Return SetError(-1)
 	For $i = 0 To UBound($aDest) - 1
 		$aDest[$i] = $aSrc[$i]
@@ -134,19 +134,16 @@ EndFunc   ;==>IncreaseGamma
 
 
 Func Toggle()
-	If $g_bEnabled = True Then ;Disable WinWarm
-		Global $g_Red_Old = $g_aRGB[0], $g_Green_Old = $g_aRGB[1], $g_Blue_Old = $g_aRGB[2]
+	If $g_bIsPaused = False Then ;Disable WinWarm
+		CopyArray($g_aRGB_Old, $g_aRGB)
 		FillArray($g_aRGB, 128) ;Default brightness values
 		TrayItemSetText($hTrayToggle, "Enable (Alt-End)")
 		HaltScreenUpdate() ;Stop periodical gamma update in main loop
 	Else ;Enable WinWarm
-		$g_aRGB[0] = $g_Red_Old
-		$g_aRGB[1] = $g_Green_Old
-		$g_aRGB[2] = $g_Blue_Old
+		CopyArray($g_aRGB, $g_aRGB_Old)
 		TrayItemSetText($hTrayToggle, "Disable (Alt-End)")
 		UnhaltScreenUpdate() ;Continue periodical gamma update in main loop
 	EndIf
-	$g_bEnabled = Not $g_bEnabled
 	SetDeviceGammaRamp($g_aRGB[0], $g_aRGB[1], $g_aRGB[2])
 EndFunc   ;==>Toggle
 
